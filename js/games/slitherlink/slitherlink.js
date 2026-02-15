@@ -83,9 +83,10 @@ class SlitherLink extends Game {
         });
 
         // invalidate edges around faces with 0 faces on
+        const validated = [];
         this.grid.faces
             .filter(f => f.valueVisible && f.value === 0)
-            .forEach(f => f.edges.forEach(e => this.setValidState(e)));
+            .forEach(f => f.edges.forEach(e => this.setValidState(e, validated)));
 
         this.undos = [];
         this.redos = [];
@@ -138,15 +139,16 @@ class SlitherLink extends Game {
             this.userIncorrectQuesses++;
         }
 
+        const validated = [];
         edge.valid = true;
         if (edge.f1) {
-            edge.f1.edges.forEach(e => this.setValidState(e));
+            edge.f1.edges.forEach(e => this.setValidState(e, validated));
         }
         if (edge.f2) {
-            edge.f2.edges.forEach(e => this.setValidState(e));
+            edge.f2.edges.forEach(e => this.setValidState(e, validated));
         }
-        edge.d1.edges.forEach(e => this.setValidState(e));
-        edge.d2.edges.forEach(e => this.setValidState(e));
+        edge.d1.edges.forEach(e => this.setValidState(e, validated));
+        edge.d2.edges.forEach(e => this.setValidState(e, validated));
 
         this.setEdgesErrorState(edge.d1);
         this.setEdgesErrorState(edge.d2);
@@ -196,20 +198,24 @@ class SlitherLink extends Game {
         face.error = false;
     }
 
-    setValidState(edge) {
+    setValidState(edge, validated) {
+        // skip it for now
+        return;
+
         if (edge.state !== Edge.STATE_DEFAULT) {
             return;
         }
 
         const valid = this.isValidForFace(edge.f1) && this.isValidForFace(edge.f2)
-            && this.isValidForDot(edge, edge.d1) && this.isValidForDot(edge, edge.d2);
+            && this.isValidForDot(edge, edge.d1, validated) && this.isValidForDot(edge, edge.d2, validated);
 
+        validated.push(edge);
         const changed = edge.valid !== valid;
         edge.valid = valid;
 
         if (changed) {
-            edge.d1.edges.forEach(e => this.setValidState(e));
-            edge.d2.edges.forEach(e => this.setValidState(e));
+            edge.d1.edges.forEach(e => this.setValidState(e, validated));
+            edge.d2.edges.forEach(e => this.setValidState(e, validated));
         }
     }
 
@@ -221,7 +227,7 @@ class SlitherLink extends Game {
         return selected < face.value;
     }
 
-    isValidForDot(edge, dot) {
+    isValidForDot(edge, dot, validated) {
         const selected = dot.edges.filter(e => e.state === Edge.STATE_SELECTED).length;
         if (selected === 1) {
             return true;
@@ -231,7 +237,7 @@ class SlitherLink extends Game {
             return false;
         }
 
-        return dot.edges.some(e => e !== edge && e.state === Edge.STATE_DEFAULT && e.valid);
+        return dot.edges.some(e => e !== edge && e.state === Edge.STATE_DEFAULT && (e.valid || !validated.includes(e)));
     }
 
     onDotClick(edge) {
