@@ -74,9 +74,7 @@ class GridRenderer extends EventEmitter {
         this.drawXOnEdges(ctx, this.edgesByState(Edge.STATE_DISABLED), theme.edgeDiscardedX);
 
         if (debug) {
-            this.grid.faces
-                .filter(face => face.type === Face.TYPE_ON)
-                .forEach(face => this.drawFace(ctx, face, theme.debuggedFaceON));
+            this.drawFaces(ctx, this.grid.faces.filter(f => f.type === Face.TYPE_ON), theme.debuggedFaceON);
 
             this.drawDebuggedDot(ctx, theme);
             this.drawDebuggedEdge(ctx, theme);

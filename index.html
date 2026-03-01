@@ -21,6 +21,10 @@
     <script src="js/grid/grid-renderer.js"></script>
     <script src="js/grid/square-grid.js"></script>
     <script src="js/grid/honeycomb-grid.js"></script>
+    <script src="js/grid/hex-grid.js"></script>
+    <script src="js/grid/triangular-grid.js"></script>
+    <script src="js/grid/pentagram-grid.js"></script>
+    <script src="js/grid/cairo-grid.js"></script>
 
     <script src="js/games/game.js"></script>
     <script src="js/games/commons/loop-gen.js"></script>
@@ -50,6 +54,10 @@
                         <select id = "gridTypeInput" class="form-select" aria-label="Type">
                             <option value="hc" selected>Honeycomb</option>
                             <option value="sq">Squares</option>
+                            <option value="he">Hexagons</option>
+                            <option value="tr">Triangles</option>
+                            <option value="pe">Pentagram</option>
+                            <option value="cr">Cairo</option>
                         </select>
                     </div>
 
@@ -67,8 +75,8 @@
                     <div class="input-group me-2">
                         <span class="input-group-text">Size</span>
                         <select id = "sizeInput" class="form-select " aria-label="Size">
-                            <option value="0">Tiny</option>
-                            <option value="1" selected>Small</option>
+                            <option value="0" selected>Tiny</option>
+                            <option value="1" >Small</option>
                             <option value="2">Large</option>
                             <option value="3">Huge</option>
                         </select>
@@ -161,16 +169,28 @@
 
     const hcSizes = [3, 5, 7, 15];
     const sqSizes = [[5, 5], [10, 10], [15, 15], [25, 25]];
+    const heSizes = [[5, 5], [10, 10], [15, 15], [25, 25]];
+    const trSizes = [5, 10, 15, 25];
+    const peSizes = [6, 9, 15, 24];
+    const crSizes = [[5, 5], [10, 10], [15, 15], [25, 25]];
 
     const gridFactories = {
         hc : (size) => new HoneycombGrid(hcSizes[size]),
-        sq : (size) => new SquareGrid(sqSizes[size][0], sqSizes[size][1])
+        sq : (size) => new SquareGrid(sqSizes[size][0], sqSizes[size][1]),
+        he : (size) => new HexagonGrid(heSizes[size][0], heSizes[size][1]),
+        tr : (size) => new TriangularGrid(trSizes[size]),
+        pe : (size) => new PentagramGrid(peSizes[size]),
+        cr : (size) => new CairoGrid(crSizes[size][0], crSizes[size][1]),
     };
 
     const renderSize = {
         hc: 50,
-        sq: 50
-    }
+        sq: 50,
+        he: 50,
+        tr: 50,
+        pe: 50,
+        cr: 50,
+    };
 
     newGameButton.addEventListener("click", () => {
        newGame();
@@ -208,6 +228,7 @@
         theme = Themes[themeInput.value];
         grid = gridFactories[gridTypeInput.value](sizeInput.value);
         game = new SlitherLink(grid, difficultyInput.value);
+        // game = new DebugGame(grid);
 
         progressRenderer = new GameGenerationProgressRenderer(grid, canvas, renderSize[gridTypeInput.value]);
         progressRenderer.draw(theme, 0);

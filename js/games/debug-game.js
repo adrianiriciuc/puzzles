@@ -2,6 +2,8 @@ class DebugGame extends Game {
     constructor(grid) {
         super();
         this.grid = grid;
+        const _this = this;
+        setTimeout( () => _this.emit('generate-end'), 10);
     }
 
     onDotClick(event) {
