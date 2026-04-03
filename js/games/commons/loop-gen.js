@@ -14,6 +14,8 @@ class LoopGen {
                 remaining.push(...this.getVisitableNeighbours(face));
             }
         }
+
+        grid.edges.forEach(e => e.type = this.loopEdge(e) ? Edge.TYPE_ON : Edge.TYPE_OFF);
     }
 
     rnd(x) {
@@ -42,5 +44,10 @@ class LoopGen {
         return face.edges
             .flatMap(edge => [edge.f1, edge.f2])
             .filter(face => face && !face.visited);
+    }
+
+    loopEdge(edge) {
+        const facesOn = (edge.f1?.type === Face.TYPE_ON ? 1 : 0) + (edge.f2?.type === Face.TYPE_ON ? 1 : 0);
+        return facesOn === 1;
     }
 }

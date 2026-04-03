@@ -31,10 +31,10 @@ class GameGenerationProgressRenderer {
         const y = (this.height - barHeight) / 2 + this.margin;
 
         const progressWidth = barWidth * progress;
-        ctx.fillStyle = theme.edgeSelected;
+        ctx.fillStyle = theme.edge.selected.color;
         ctx.fillRect(x, y, progressWidth, barHeight);
 
-        ctx.strokeStyle = theme.edgeDefault;
+        ctx.strokeStyle = theme.edge.default.color;
         ctx.lineWidth = 2;
         ctx.rect(x, y, barWidth, barHeight);
         ctx.stroke();

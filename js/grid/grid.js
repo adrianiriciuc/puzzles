@@ -1,6 +1,15 @@
 class Dot {
+    static TYPE_OFF = 'off';
+    static TYPE_ON = 'on';
+
     x;
     y;
+
+    type = undefined;
+
+    value;
+    valueVisible = true;
+
     constructor(edges, faces) {
         this.edges = edges;
         this.faces = faces;

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/slitherlink.css">
 
-    <script src="js/bootstrap.js"></script>
+    <script src="js/bootstrap.bundle.js"></script>
     <script src="js/sat.js"></script>
 
     <script src="js/utilities/utils.js"></script>
@@ -28,18 +28,36 @@
 
     <script src="js/games/game.js"></script>
     <script src="js/games/commons/loop-gen.js"></script>
+    <script src="js/games/commons/sat-utils.js"></script>
     <script src="js/games/slitherlink/slitherlink.js"></script>
+    <script src="js/games/shingoki/shingoki.js"></script>
     <script src="js/games/debug-game.js"></script>
+
     <script src="js/games/game-generation-progress-renderer.js"></script>
 
     <script src="js/themes.js"></script>
+
+    <script src="js/app.js"></script>
+    <script src="js/app.dropdown.js"></script>
 </head>
 <body>
 
 <div class="container">
     <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Slitherlink</span>
+
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li id = "gameInput" class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Slitherlink
+                    </a>
+                    <ul class="dropdown-menu position-absolute">
+                        <li><a class="dropdown-item" href="#">Slitherlink</a></li>
+                        <li><a class="dropdown-item" href="#">Shingoki</a></li>
+                    </ul>
+                </li>
+            </ul>
+
             <p id = "timebox" class="text-primary mb-0">00:00</p>
         </div>
     </nav>
@@ -52,33 +70,18 @@
                     <div class="input-group me-2">
                         <span class="input-group-text">Type</span>
                         <select id = "gridTypeInput" class="form-select" aria-label="Type">
-                            <option value="hc" selected>Honeycomb</option>
-                            <option value="sq">Squares</option>
-                            <option value="he">Hexagons</option>
-                            <option value="tr">Triangles</option>
-                            <option value="pe">Pentagram</option>
-                            <option value="cr">Cairo</option>
                         </select>
                     </div>
 
                     <div class="input-group me-2">
                         <span  class="input-group-text">Difficulty</span>
                         <select id = "difficultyInput" class="form-select" aria-label="Difficulty">
-                            <option value="0">Easy</option>
-                            <option value="1">Normal</option>
-                            <option value="2" selected>Hard</option>
-                            <option value="3">Expert</option>
-                            <option value="4">Insane</option>
                         </select>
                     </div>
 
                     <div class="input-group me-2">
                         <span class="input-group-text">Size</span>
                         <select id = "sizeInput" class="form-select " aria-label="Size">
-                            <option value="0">Tiny</option>
-                            <option value="1" selected>Small</option>
-                            <option value="2">Large</option>
-                            <option value="3">Huge</option>
                         </select>
                     </div>
 
@@ -148,7 +151,9 @@
 </div>
 
 <script>
-    const debug = false;
+    const debugGrid = false;
+    const debugGame = false;
+
     let theme, grid, game, renderer, progressRenderer;
     let startGameTime;
     let playing = false;
@@ -165,35 +170,23 @@
     const themeInput = document.getElementById("themeInput");
     const restartButton = document.getElementById("restartButton");
 
+    const gameInput = new AppDropdown(document.getElementById("gameInput"));
+
     const canvas = document.getElementById("canvas");
 
-    const hcSizes = [3, 5, 7, 15];
-    const sqSizes = [[5, 5], [10, 10], [15, 15], [25, 25]];
-    const heSizes = [[5, 5], [10, 10], [15, 15], [25, 25]];
-    const trSizes = [5, 10, 15, 25];
-    const peSizes = [6, 9, 15, 24];
-    const crSizes = [[5, 5], [10, 10], [15, 15], [25, 25]];
+    const app = new PuzzlesApp(debugGrid, debugGame);
 
-    const gridFactories = {
-        hc : (size) => new HoneycombGrid(hcSizes[size]),
-        sq : (size) => new SquareGrid(sqSizes[size][0], sqSizes[size][1]),
-        he : (size) => new HexagonGrid(heSizes[size][0], heSizes[size][1]),
-        tr : (size) => new TriangularGrid(trSizes[size]),
-        pe : (size) => new PentagramGrid(peSizes[size]),
-        cr : (size) => new CairoGrid(crSizes[size][0], crSizes[size][1]),
-    };
+    buildSelect(gridTypeInput, app.getGridTypes(gameInput.getValue().toLowerCase()));
+    buildSelect(sizeInput, app.getSizeTypes());
+    buildSelect(difficultyInput, app.getDifficultyTypes());
 
-    const renderSize = {
-        hc: 50,
-        sq: 50,
-        he: 50,
-        tr: 50,
-        pe: 50,
-        cr: 50,
-    };
+    gameInput.on("change", () => {
+        buildSelect(gridTypeInput, app.getGridTypes(gameInput.getValue().toLowerCase()));
+        newGame();
+    });
 
     newGameButton.addEventListener("click", () => {
-       newGame();
+        newGame()
     });
 
     themeInput.addEventListener("change", () => {
@@ -226,15 +219,15 @@
         playing = false;
 
         theme = Themes[themeInput.value];
-        grid = gridFactories[gridTypeInput.value](sizeInput.value);
-        game = new SlitherLink(grid, difficultyInput.value);
-        // game = new DebugGame(grid);
+        grid = app.buildGrid(gridTypeInput.value, sizeInput.value);
+        game = app.newGame(gameInput.getValue().toLowerCase(), grid, difficultyInput.value);
 
-        progressRenderer = new GameGenerationProgressRenderer(grid, canvas, renderSize[gridTypeInput.value]);
+        progressRenderer = new GameGenerationProgressRenderer(grid, canvas, app.getEdgeSize(gridTypeInput.value));
         progressRenderer.draw(theme, 0);
 
-        renderer = new GridRenderer(grid, canvas, renderSize[gridTypeInput.value]);
-        renderer.debug = debug;
+        renderer = new GridRenderer(grid, canvas, app.getEdgeSize(gridTypeInput.value));
+        renderer.debug = debugGame;
+        window.renderer = renderer;
 
         renderer.on("dotClicked", dot => {
             game.onDotClick(dot);
@@ -289,6 +282,12 @@
     function setUndoRedoDisabledState() {
         undoButton.disabled = !game.canUndo();
         redoButton.disabled = !game.canRedo();
+    }
+
+    function buildSelect(select, options) {
+        select.options.length = 0;
+        Object.getOwnPropertyNames(options)
+            .forEach((prop) => select.options.add(new Option(options[prop], prop)));
     }
 </script>
 

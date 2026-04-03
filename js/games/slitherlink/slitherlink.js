@@ -1,11 +1,11 @@
 class SlitherLink extends Game {
-    static HIDDEN_FACES_RATIO = [
-        0.1, // easy
-        0.2, // normal
-        0.3, // hard
-        0.4, // expert
-        0.6  // insane
-    ];
+    static HIDDEN_FACES_RATIO = {
+        easy: 0.1,
+        normal: 0.2,
+        hard: 0.3,
+        expert: 0.4,
+        insane: 0.6
+    };
 
     constructor(grid, difficulty) {
         super();
@@ -14,18 +14,12 @@ class SlitherLink extends Game {
         this.loopGen = new LoopGen();
 
         this.loopGen.generateLoop(grid);
-        this.grid.edges.forEach(e => e.type = this.loopEdge(e) ? Edge.TYPE_ON : Edge.TYPE_OFF);
         this.grid.faces.forEach(f => f.value = this.countEdgesOn(f));
 
         // count edges on so, we can determine when the user finishes the game;
         this.totalEdgesOn = this.grid.edges.filter(e => e.type === Edge.TYPE_ON).length;
 
         this.generatePuzzle(difficulty);
-    }
-
-    loopEdge(edge) {
-        const facesOn = (edge.f1?.type === Face.TYPE_ON ? 1 : 0) + (edge.f2?.type === Face.TYPE_ON ? 1 : 0);
-        return facesOn === 1;
     }
 
     countEdgesOn(face) {
@@ -274,7 +268,7 @@ class SlitherLink extends Game {
 
         // these clauses are always to be used
         const persistentClauses = []
-        this.grid.dots.forEach(d => persistentClauses.push(...this.getDotSATClauses(d)));
+        this.grid.dots.forEach(d => persistentClauses.push(...SatUtils.dotClausesForLoop(d)));
         // this clause excludes the actual solution -> so normally sat should never be able to solve it
         persistentClauses.push(this.grid.edges.map(e => e.type === Edge.TYPE_ON ? -e.id : e.id));
 
@@ -323,42 +317,10 @@ class SlitherLink extends Game {
         const clauses = [];
 
         //n - k + 1 edges can not be false
-        this.combinations(n, n - k + 1, result => clauses.push(result.map(i => face.edges[i].id)));
+        SatUtils.combinations(n, n - k + 1, result => clauses.push(result.map(i => face.edges[i].id)));
         //k + 1 edges can not be true
-        this.combinations(n, k + 1, result => clauses.push(result.map(i => -face.edges[i].id)));
+        SatUtils.combinations(n, k + 1, result => clauses.push(result.map(i => -face.edges[i].id)));
 
         return clauses;
-    }
-
-    getDotSATClauses(dot) {
-        const n = dot.edges.length;
-        const clauses = [];
-        // 3 edges connected by this dot cannot be true
-        this.combinations(n, 3, result => clauses.push(result.map(i => -dot.edges[i].id)));
-        // only one edge alone cannot be true;
-        for (let i = 0; i < n; i++) {
-            clauses.push(dot.edges.map(e => e === dot.edges[i] ? -e.id : e.id));
-        }
-        return clauses;
-    }
-
-    combinations(n, k, callback) {
-        const st = emptyArray(k);
-        st[0] = -1;
-        let i = 0;
-        while (i > -1) {
-            if (i < k && st[i] < n - 1) {
-                st[i] += 1;
-                i = i + 1;
-                if (i < k) {
-                    st[i] = st[i - 1];
-                }
-            } else if (i === k) {
-                callback(st);
-                i = i - 1;
-            } else {
-                i = i - 1;
-            }
-        }
     }
 }

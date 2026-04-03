@@ -1,5 +1,5 @@
 class GridRenderer extends EventEmitter {
-    margin = 10;
+    margin = 15;
     debug = false;
     finished = false;
 
@@ -24,7 +24,6 @@ class GridRenderer extends EventEmitter {
         }
 
         this.canvas.onclick = e => {
-            console.log(e);
             const x = (e.offsetX - this.margin - 0.5) / scale;
             const y = (e.offsetY - this.margin - 0.5) / scale;
 
@@ -61,49 +60,50 @@ class GridRenderer extends EventEmitter {
         ctx.fillRect(-1, -1, this.canvas.width + 2, this.canvas.height + 2);
 
         if (this.finished) {
-            this.drawFaces(ctx, this.grid.faces.filter(f => f.type === Face.TYPE_ON), theme.edgeSelected);
-            this.drawEdges(ctx, this.grid.edges, theme.edgeDefault, 1);
+            this.drawFaces(ctx, this.grid.faces.filter(f => f.type === Face.TYPE_ON), theme.edge.selected.color);
+            this.drawEdges(ctx, this.grid.edges, theme.edge.default);
 
             return;
         }
 
-        this.drawEdges(ctx, this.edgesByState(Edge.STATE_DEFAULT).filter(e => e.valid), theme.edgeDefault, 1);
-        this.drawEdges(ctx, this.edgesByState(Edge.STATE_DEFAULT).filter(e => !e.valid), theme.edgeDiscarded, 1);
-        this.drawEdges(ctx, this.edgesByState(Edge.STATE_SELECTED), theme.edgeSelected, 2);
-        this.drawEdges(ctx, this.edgesByState(Edge.STATE_DISABLED), theme.edgeDiscarded, 1);
-        this.drawXOnEdges(ctx, this.edgesByState(Edge.STATE_DISABLED), theme.edgeDiscardedX);
+        this.drawEdges(ctx, this.edgesByState(Edge.STATE_DEFAULT).filter(e => e.valid), theme.edge.default);
+        this.drawEdges(ctx, this.edgesByState(Edge.STATE_DEFAULT).filter(e => !e.valid), theme.edge.discarded);
+        this.drawEdges(ctx, this.edgesByState(Edge.STATE_SELECTED), theme.edge.selected);
+        this.drawEdges(ctx, this.edgesByState(Edge.STATE_DISABLED), theme.edge.discarded);
+        this.drawXOnEdges(ctx, this.edgesByState(Edge.STATE_DISABLED), theme.edge.discardedX);
 
-        if (debug) {
+        if (this.debug) {
             this.drawFaces(ctx, this.grid.faces.filter(f => f.type === Face.TYPE_ON), theme.debuggedFaceON);
 
             this.drawDebuggedDot(ctx, theme);
             this.drawDebuggedEdge(ctx, theme);
             this.drawDebuggedFace(ctx, theme);
-
-            const hasValues = this.grid.faces.some(face => face.value);
-            if (!hasValues) {
-                this.drawFacesIds(ctx, theme.faceValue, theme.font);
-            }
         }
 
-        this.drawValues(ctx, theme.faceValue, theme.faceError, theme.font);
-        this.drawEdges(ctx, this.grid.edges.filter(e => e.error), theme.edgeError, 2);
+        this.drawFaceValues(ctx, theme.face);
+        this.drawDotValues(ctx, this.grid.dots.filter(d => d.type === Dot.TYPE_ON && d.valueVisible), theme.dot.on);
+        this.drawDotValues(ctx, this.grid.dots.filter(d => d.type === Dot.TYPE_OFF && d.valueVisible), theme.dot.off);
+        this.drawEdges(ctx, this.grid.edges.filter(e => e.error), theme.edge.error);
     }
 
-    drawEdges(ctx, edges, lineColor, lineWidth) {
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = lineWidth;
+    drawEdges(ctx, edges, style) {
+        ctx.save();
+        ctx.strokeStyle = style.color;
+        ctx.lineWidth = style.width;
+        ctx.shadowColor = style.shadowColor;
+        ctx.shadowBlur = style.shadowBlur;
         ctx.beginPath();
         for (let e of edges) {
             ctx.moveTo(this.p(e.d1.x), this.p(e.d1.y));
             ctx.lineTo(this.p(e.d2.x), this.p(e.d2.y));
         }
         ctx.stroke();
+        ctx.restore();
     }
 
-    drawXOnEdges(ctx, edges, xcolor) {
-        ctx.strokeStyle = xcolor;
-        ctx.lineWidth = 1;
+    drawXOnEdges(ctx, edges, style) {
+        ctx.strokeStyle = style.color;
+        ctx.lineWidth = style.width;
         ctx.beginPath();
         for (let e of edges) {
             const cx = this.p((e.d1.x + e.d2.x) / 2);
@@ -136,13 +136,37 @@ class GridRenderer extends EventEmitter {
         ctx.stroke();
     }
 
-    drawValues(ctx, color, error, font) {
+    drawFaceValues(ctx, style) {
         for (let f of this.grid.faces) {
             if (f.value !== undefined && f.valueVisible) {
-                ctx.font = (f.error ? "bold " : "") + font;
-                ctx.fillStyle = f.error ? error : color;
+                ctx.font = (f.error ? "bold " : "") + style.font;
+                ctx.fillStyle = f.error ? style.error : style.value;
                 ctx.fillText(f.value, this.p(f.cx) - 6, this.p(f.cy) + 6);
             }
+        }
+    }
+
+    drawDotValues(ctx, dots, style) {
+        ctx.strokeStyle = style.strokeColor;
+        ctx.lineWidth = style.strokeWidth;
+        ctx.fillStyle = style.fillColor;
+
+        for (let d of dots) {
+            ctx.beginPath();
+            ctx.arc(this.p(d.x), this.p(d.y), 13, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = style.strokeColor;
+        ctx.lineWidth = style.strokeWidth;
+        ctx.fillStyle = style.fillColor;
+        for (let d of dots) {
+            const marginTop = 5;
+            const marginLeft = d.value < 10 ? -5 : -10;
+            ctx.font = style.font;
+            ctx.fillStyle = d.error ? style.error : style.value;
+            ctx.fillText(d.value, this.p(d.x) + marginLeft, this.p(d.y) + marginTop);
         }
     }
 
@@ -157,7 +181,6 @@ class GridRenderer extends EventEmitter {
             ctx.closePath();
             ctx.fill();
         }
-
     }
 
     p (v) {
@@ -165,9 +188,9 @@ class GridRenderer extends EventEmitter {
     }
 
     /*** Methods used for debugging ***/
-    drawFacesIds(ctx, color, font) {
-        ctx.font = font;
-        ctx.fillStyle = color;
+    drawFacesIds(ctx, style) {
+        ctx.font = style.font;
+        ctx.fillStyle = style.value;
         let id = 0;
         for (let f of this.grid.faces) {
             ctx.fillText(id++, this.p(f.cx) - 6, this.p(f.cy) + 6);

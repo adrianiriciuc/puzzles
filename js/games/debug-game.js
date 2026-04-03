@@ -16,7 +16,7 @@ class DebugGame extends Game {
 
     onEdgeClick(event) {
         this.grid.debuggedDot = null;
-        this.grid.debuggedEdge = event.dge === this.grid.debuggedEdge ? null : event.edge;
+        this.grid.debuggedEdge = event.edge === this.grid.debuggedEdge ? null : event.edge;
         this.grid.debuggedFace = null;
 
         event.stopPropagation = true;
