@@ -61,7 +61,7 @@ class SlitherLink extends Game {
     }
 
     restart() {
-        // user completed the game (totalEdgesOn = userCorrectQuesses and userWrongQuesses = 0)
+        // user completed the game (totalEdgesOn = userCorrectQuesses and userIncorrectQuesses = 0)
         this.finished = false;
 
         // count users correct and incorrect guesses

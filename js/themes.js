@@ -38,6 +38,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#0F1220',
                 value: '#d8daea',
+                error: '#ec0000',
                 font: "bold 16px Courier"
             },
             off: {
@@ -45,6 +46,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#596c8f',
                 value: '#0F1220',
+                error: '#ec0000',
                 font: "bold 16px Courier"
             },
         },
@@ -92,6 +94,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#FFFFFF',
                 value: '#1F2937',
+                error: '#DC2626',
                 font: "bold 16px Courier"
             },
             off: {
@@ -99,6 +102,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#8da3e6',
                 value: '#FFFFFF',
+                error: '#DC2626',
                 font: "bold 16px Courier"
             },
         },
@@ -141,6 +145,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#0B1020',
                 value: '#E0F2FE',
+                error: '#FB7185',
                 font: "bold 16px Courier"
             },
             off: {
@@ -148,6 +153,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#334155',
                 value: '#0B1020',
+                error: '#FB7185',
                 font: "bold 16px Courier"
             },
         },
@@ -189,6 +195,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#FAF7F2',
                 value: '#374151',
+                error: '#E11D48',
                 font: "bold 16px Courier"
             },
             off: {
@@ -196,6 +203,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#baafa7',
                 value: '#FAF7F2',
+                error: '#E11D48',
                 font: "bold 16px Courier"
             },
         },
@@ -239,6 +247,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#E7D8B1',
                 value: '#3B2F2F',
+                error: '#B91C1C',
                 font: "bold 16px Courier"
             },
             off: {
@@ -246,6 +255,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#A68A64',
                 value: '#E7D8B1',
+                error: '#B91C1C',
                 font: "bold 16px Courier"
             },
         },
@@ -287,6 +297,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#ECFEFF',
                 value: '#0F172A',
+                error: '#BE123C',
                 font: "bold 16px Courier"
             },
             off: {
@@ -294,6 +305,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#94A3B8',
                 value: '#ECFEFF',
+                error: '#BE123C',
                 font: "bold 16px Courier"
             },
         },
@@ -335,6 +347,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#0F0F0F',
                 value: '#F9FAFB',
+                error: '#FF3B30',
                 font: "bold 16px Courier"
             },
             off: {
@@ -342,6 +355,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#4B5563',
                 value: '#0F0F0F',
+                error: '#FF3B30',
                 font: "bold 16px Courier"
             },
         },
@@ -383,6 +397,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#0B0F14',
                 value: '#F8FAFC',
+                error: '#EF4444',
                 font: "bold 16px Courier"
             },
             off: {
@@ -390,6 +405,7 @@ class Themes {
                 strokeWidth: 1,
                 fillColor: '#473113',
                 value: '#0B0F14',
+                error: '#EF4444',
                 font: "bold 16px Courier"
             },
         },

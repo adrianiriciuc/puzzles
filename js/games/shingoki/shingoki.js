@@ -128,7 +128,14 @@ class Shingoki extends Game {
             .filter(d => d.type)
             .forEach(d => d.clauses = this.getDotSATClauses(cnf, d));
 
-        const dots = shuffleArray(this.grid.dots.filter(d => d.type));
+        const dots = shuffleArray(this.grid.dots.filter(d => d.type))
+            .map(d => {
+                d.importance = d.edges.length
+                + d.value
+                + d.type === Dot.TYPE_ON ? 2 : 0;
+                return d;
+            })
+            .sort(((d1, d2) => -d1.importance + d2.importance));
         dots.length = Math.floor(dots.length * Shingoki.HIDDEN_CLUES_RATIO[difficulty]);
         let dindex = 0;
         let _this = this;
@@ -252,7 +259,7 @@ class Shingoki extends Game {
     }
 
     restart() {
-        // user completed the game (totalEdgesOn = userCorrectQuesses and userWrongQuesses = 0)
+        // user completed the game (totalEdgesOn = userCorrectQuesses and userIncorrectQuesses = 0)
         this.finished = false;
 
         // count users correct and incorrect guesses
@@ -264,7 +271,11 @@ class Shingoki extends Game {
             e.state = Edge.STATE_DEFAULT;
             e.valid = true;
             e.error = false;
+            e.error1 = false;
+            e.error2 = false;
         });
+
+        this.grid.dots.forEach(d => d.error = false);
 
         this.undos = [];
         this.redos = [];
@@ -351,29 +362,31 @@ class Shingoki extends Game {
             this.userIncorrectQuesses++;
         }
 
-        const validated = [];
-        edge.d1.edges.forEach(e => this.setValidState(e, validated));
-        edge.d2.edges.forEach(e => this.setValidState(e, validated));
+        this.grid.edges.forEach(e => e.valid = true);
+        this.grid.edges.forEach(e => this.setValidState(e));
+
+        this.setEdgesErrorState(edge.d1);
+        this.setEdgesErrorState(edge.d2);
+        this.grid.dots.forEach(d => d.error = this.getDotErrorState(d));
     }
 
-    setValidState(edge, validated) {
-        validated.push(edge);
-        if (edge.state !== Edge.STATE_DEFAULT) {
+    setValidState(edge) {
+        if (edge.state !== Edge.STATE_DEFAULT || !edge.valid) {
             return;
         }
 
-        const valid = this.isValidForDot(edge, edge.d1, validated) && this.isValidForDot(edge, edge.d2, validated);
+        const valid = this.isValidForDot(edge, edge.d1) && this.isValidForDot(edge, edge.d2);
 
         const changed = edge.valid !== valid;
         edge.valid = valid;
 
         if (changed) {
-            edge.d1.edges.forEach(e => this.setValidState(e, validated));
-            edge.d2.edges.forEach(e => this.setValidState(e, validated));
+            edge.d1.edges.forEach(e => this.setValidState(e));
+            edge.d2.edges.forEach(e => this.setValidState(e));
         }
     }
 
-    isValidForDot(edge, dot, validated) {
+    isValidForDot(edge, dot) {
         const selected = dot.edges.filter(e => e.state === Edge.STATE_SELECTED).length;
         if (selected === 1) {
             return true;
@@ -385,7 +398,61 @@ class Shingoki extends Game {
 
         return dot.edges.some(e => e !== edge
             && e.state === Edge.STATE_DEFAULT
-            && (e.valid || !validated.includes(e)));
+            && e.valid);
+    }
+
+    setEdgesErrorState(dot) {
+        const on = dot.edges.filter(e => e.state === Edge.STATE_SELECTED).length;
+        dot.edges.forEach(e => {
+            if (dot === e.d1) {
+                e.error1 = e.state === Edge.STATE_SELECTED && on > 2;
+            } else {
+                e.error2 = e.state === Edge.STATE_SELECTED && on > 2;
+            }
+
+            e.error = e.error1 || e.error2;
+        });
+    }
+
+    getDotErrorState(dot) {
+        if (!dot.value || !dot.valueVisible) {
+            return false;
+        }
+        const selected = dot.edges.filter(e => e.state === Edge.STATE_SELECTED);
+        const available = dot.edges.filter(e => e.state === Edge.STATE_DEFAULT)
+        if (!selected.length) {
+            return available.length < 2;
+        }
+        if (selected.length > 2) {
+            return true;
+        }
+
+        if (selected.length === 1) {
+            return !available.length || this.computeSelectedSegmentLength(dot, selected[0]) >= dot.value;
+        }
+
+        const e1 = selected[0];
+        const e2 = selected[1];
+        const collinear  = this.collinear(this.nextDot(e1, dot), dot, this.nextDot(e2, dot));
+
+        if (dot.type === Dot.TYPE_ON && collinear || dot.type === Dot.TYPE_OFF && !collinear) {
+            return true;
+        }
+
+        return this.computeSelectedSegmentLength(dot, e1) + this.computeSelectedSegmentLength(dot, e2) > dot.value ;
+    }
+
+    computeSelectedSegmentLength(dot, edge) {
+        if (!edge || edge.state !== Edge.STATE_SELECTED) {
+            return 0;
+        }
+
+        let nextDot = this.nextDot(edge, dot);
+        const candidates = nextDot.edges
+            .filter(e => e !== edge)
+            .filter(e => this.collinear(dot, nextDot, this.nextDot(e, nextDot)));
+
+        return 1 + (candidates.length ? this.computeSelectedSegmentLength(nextDot, candidates[0]) : 0);
     }
 
     isCorrectGuess(edge) {
