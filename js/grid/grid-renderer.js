@@ -10,22 +10,19 @@ class GridRenderer extends EventEmitter {
         this.canvas = canvas;
         this.scale = scale;
 
-        this.width = this.grid.getWidth() * scale;
-        this.height = this.grid.getHeight() * scale;
-
-        this.canvas.width = this.width + 2 * this.margin + 1;
-        this.canvas.height = this.height + 2 * this.margin + 1;
-
-        const ctx = this.canvas.getContext("2d");
-        ctx.translate(0.5, 0.5);
+        this.baseScale = scale;
+        this.pan = {x: 0, y: 0};
+        this.resize();
 
         this.canvas.oncontextmenu = e => {
             e.preventDefault();
         }
 
-        this.canvas.onclick = e => {
-            const x = (e.offsetX - this.margin - 0.5) / scale;
-            const y = (e.offsetY - this.margin - 0.5) / scale;
+        this.activate = (px, py) => {
+            if (!this.enabled) return;
+            const scale = this.scale;
+            const x = (px - this.pan.x - this.margin - 0.5) / scale;
+            const y = (py - this.pan.y - this.margin - 0.5) / scale;
 
             const closestDot = this.grid.dots.reduce((a, b) => a.distance(x, y) > b.distance(x, y) ? b : a);
             if (closestDot.distance(x, y) < 7 / scale) {
@@ -53,11 +50,58 @@ class GridRenderer extends EventEmitter {
         };
     }
 
-    draw(theme) {
-        const ctx = this.canvas.getContext("2d");
+    resize() {
+        const rect = this.canvas.getBoundingClientRect();
+        const oldWidth = this.width;
+        const oldHeight = this.height;
+        this.width = rect.width;
+        this.height = rect.height;
+        this.pixelRatio = window.devicePixelRatio || 1;
+        this.canvas.width = Math.round(this.width * this.pixelRatio);
+        this.canvas.height = Math.round(this.height * this.pixelRatio);
+        if (oldWidth) {
+            this.pan.x += (this.width - oldWidth) / 2;
+            this.pan.y += (this.height - oldHeight) / 2;
+        } else {
+            this.fit();
+        }
+        this.constrain();
+        if (this.theme) this.draw(this.theme);
+    }
 
+    fit() {
+        this.scale = Math.max(4, Math.min(this.baseScale,
+            (this.width - 2 * this.margin) / this.grid.getWidth(),
+            (this.height - 2 * this.margin) / this.grid.getHeight()));
+        this.pan.x = (this.width - this.grid.getWidth() * this.scale) / 2 - this.margin;
+        this.pan.y = (this.height - this.grid.getHeight() * this.scale) / 2 - this.margin;
+        if (this.theme) this.draw(this.theme);
+    }
+
+    constrain() {
+        for (const [axis, extent, units] of [['x', this.width, this.grid.getWidth()], ['y', this.height, this.grid.getHeight()]]) {
+            const size = units * this.scale + 2 * this.margin;
+            this.pan[axis] = size <= extent ? (extent - size) / 2 : Math.max(extent - size, Math.min(0, this.pan[axis]));
+        }
+    }
+
+    zoom(factor, x = this.width / 2, y = this.height / 2) {
+        const previous = this.scale;
+        this.scale = Math.max(4, Math.min(this.baseScale * 4, previous * factor));
+        const ratio = this.scale / previous;
+        this.pan.x = x - this.margin - (x - this.pan.x - this.margin) * ratio;
+        this.pan.y = y - this.margin - (y - this.pan.y - this.margin) * ratio;
+        this.constrain();
+        if (this.theme) this.draw(this.theme);
+    }
+
+    draw(theme) {
+        this.theme = theme;
+        const ctx = this.canvas.getContext("2d");
+        ctx.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
         ctx.fillStyle = theme.background;
-        ctx.fillRect(-1, -1, this.canvas.width + 2, this.canvas.height + 2);
+        ctx.fillRect(0, 0, this.width, this.height);
+        ctx.translate(this.pan.x + 0.5, this.pan.y + 0.5);
 
         if (this.finished) {
             this.drawFaces(ctx, this.grid.faces.filter(f => f.type === Face.TYPE_ON), theme.edge.selected.color);

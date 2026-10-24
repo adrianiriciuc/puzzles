@@ -1,4 +1,30 @@
 class Themes {
+    static MOSS_AND_STONE = {
+        background: '#E8E6DC',
+        edge: {
+            default: {width: 1, color: '#92998A'},
+            selected: {width: 2, color: '#315C43'},
+            discarded: {width: 1, color: '#CECEC1'},
+            discardedX: {width: 1, color: '#84664C'},
+            error: {width: 2, color: '#B33E36'},
+        },
+        face: {value: '#303A32', error: '#B33E36', font: '18px Courier'},
+        dot: {
+            on: {
+                strokeColor: '#65745F', strokeWidth: 1, fillColor: '#E8E6DC',
+                value: '#303A32', error: '#B33E36', font: 'bold 16px Courier',
+            },
+            off: {
+                strokeColor: '#65745F', strokeWidth: 1, fillColor: '#65745F',
+                value: '#FAF9F2', error: '#B33E36', font: 'bold 16px Courier',
+            },
+        },
+        debuggedDot: '#B33E36',
+        debuggedEdge: '#315C43',
+        debuggedFace: '#C6CEB9',
+        debuggedFaceON: '#A9BB98',
+    };
+
     static DEFAULT = {
         background: '#0F1220',
         edge: {

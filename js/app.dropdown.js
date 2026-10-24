@@ -7,7 +7,8 @@ function AppDropdown(element) {
     let currentValue = toggle.textContent.trim();
 
     menu.querySelectorAll(".dropdown-item").forEach((item) => {
-       item.addEventListener("click", () => {
+       item.addEventListener("click", (event) => {
+           event.preventDefault();
            const value = item.textContent.trim();
            if (value !== currentValue) {
                currentValue = value;

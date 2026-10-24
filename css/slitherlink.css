@@ -1,10 +1,57 @@
-canvas {
-    width: auto !important;
-    height: auto !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
+:root { color-scheme: dark; --surface: #202b30; --border: #344348; --muted: #a5b5b9; --accent: #b8e8ca; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #141d21; color: #eef3f1; font-family: system-ui, sans-serif; }
+.app-shell { width: min(1120px, 100%); margin: auto; padding: 32px 28px 20px; }
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+.header-actions { display: flex; align-items: center; gap: 20px; }
+.header-actions > button { border: 1px solid var(--border); }
+h1 { font-size: 32px; font-weight: 600; letter-spacing: -.05em; margin: 0; }
+.btn { min-height: 44px; border-radius: 9px; }
+.timer { text-align: right; }
+.timer span { font-size: 10px; letter-spacing: .16em; color: var(--muted); }
+.timer p { margin: 0; font-size: 24px; font-variant-numeric: tabular-nums; }
+.settings { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; align-items: end; gap: 14px; margin-bottom: 20px; }
+.settings label { font-size: 12px; color: var(--muted); min-width: 0; }
+.form-select { min-height: 44px; margin-top: 7px; border-color: var(--border); background-color: var(--surface); border-radius: 9px; color: #eef3f1; }
+.btn-new { background: var(--accent); color: #173526; font-weight: 650; padding-inline: 24px; }
+.btn-new:hover { background: #d0f4dc; color: #173526; }
+.board-card { overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.board-toolbar, .board-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; }
+.board-toolbar { border-bottom: 1px solid var(--border); }
+.history { display: flex; gap: 4px; }
+.tool { color: #dce7e4; padding: 8px 12px; font-size: 14px; }
+.tool:hover { color: white; background: #34454b; }
+.tool:disabled { opacity: .35; }
+.btn:focus-visible, .form-select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; box-shadow: none; }
+.board-viewport { position: relative; width: 100%; height: clamp(320px, 60vh, 720px); overflow: hidden; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#generationStatus { position: absolute; inset: 0; display: grid; place-items: center; background: #141d21ed; color: var(--accent); font-size: 15px; }
+#generationStatus[hidden] { display: none; }
+.board-footer { border-top: 1px solid var(--border); }
+.board-footer p { color: var(--muted); font-size: 12px; margin: 0; }
+#toolbarTheme { flex: 1; min-width: 0; max-width: 260px; }
+.appearance { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; }
+.appearance label { white-space: nowrap; }
+.appearance .form-select { width: 100%; min-width: 0; margin: 0; font-size: 13px; }
+dialog { width: min(460px, calc(100% - 24px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: var(--surface); color: #eef3f1; }
+dialog::backdrop { background: #080f13b8; }
+.settings-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.settings-heading h2 { font-size: 20px; margin: 0; }
+dialog .settings { grid-template-columns: 1fr 1fr; }
+dialog .settings .btn-new { grid-column: 1 / -1; margin-top: 6px; }
+@media (max-width: 600px) {
+ .app-shell { height: 100svh; height: 100dvh; display: flex; flex-direction: column; gap: 8px; padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+ .app-header { flex: 0 0 auto; margin: 0; gap: 8px; }
+ h1 { font-size: 23px; }
+ .header-actions { gap: 10px; }
+ .timer span { display: none; }
+ .timer p { font-size: 16px; }
+ .board-card { display: flex; flex-direction: column; flex: 1; min-height: 0; border-radius: 12px; }
+ .board-viewport { height: auto; flex: 1; min-height: 0; }
+ .board-toolbar { flex: 0 0 auto; padding: 4px; }
+ .board-toolbar .tool { min-width: 44px; padding-inline: 10px; }
+ .board-toolbar > .tool, .history .tool { font-size: 22px; line-height: 1; }
+ .board-toolbar .tool span, .appearance label, .board-footer { display: none; }
+ dialog .settings { gap: 12px; }
 }
-
-.container {
-    max-width: max-content;
-}
+@media (max-height: 500px) and (orientation: landscape) and (min-width: 601px) { .board-viewport { height: 75svh; } }
