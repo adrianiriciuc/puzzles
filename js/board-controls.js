@@ -25,11 +25,12 @@ function BoardControls(canvas, getRenderer) {
         pointers.set(e.pointerId, next);
         if (before) {
             const after = pair();
-            if (before.distance > 0) r.zoom(after.distance / before.distance, before.x, before.y);
+            if (before.distance > 0) r.zoom(after.distance / before.distance, before.x, before.y, false);
             r.pan.x += after.x - before.x;
             r.pan.y += after.y - before.y;
         } else {
-            if (!moved && Math.hypot(next.x - start.x, next.y - start.y) < 6) return;
+            const dragThreshold = e.pointerType === 'touch' ? 10 : 6;
+            if (!moved && Math.hypot(next.x - start.x, next.y - start.y) < dragThreshold) return;
             const origin = moved ? previous : start;
             moved = true;
             r.pan.x += next.x - origin.x;
@@ -42,7 +43,7 @@ function BoardControls(canvas, getRenderer) {
         if (!pointers.has(e.pointerId)) return;
         if (e.type === 'pointerup' && pointers.size === 1 && !moved) {
             const p = point(e);
-            getRenderer().activate(p.x, p.y);
+            getRenderer().activate(p.x, p.y, e.pointerType);
         }
         pointers.delete(e.pointerId);
         moved = true;

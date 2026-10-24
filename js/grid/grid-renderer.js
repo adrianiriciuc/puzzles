@@ -18,7 +18,7 @@ class GridRenderer extends EventEmitter {
             e.preventDefault();
         }
 
-        this.activate = (px, py) => {
+        this.activate = (px, py, pointerType = 'mouse') => {
             if (!this.enabled) return;
             const scale = this.scale;
             const x = (px - this.pan.x - this.margin - 0.5) / scale;
@@ -33,8 +33,21 @@ class GridRenderer extends EventEmitter {
                 }
             }
 
-            const closestEdge = this.grid.edges.reduce((a, b) => a.distance(x, y) > b.distance(x, y) ? b : a);
-            if (closestEdge.distance(x, y) < 10 / scale) {
+            // Compare in screen pixels, and avoid choosing arbitrarily at a junction.
+            let closestEdge, distance = Infinity, secondDistance = Infinity;
+            for (const edge of this.grid.edges) {
+                const candidate = edge.distance(x, y) * scale;
+                if (candidate < distance) {
+                    secondDistance = distance;
+                    distance = candidate;
+                    closestEdge = edge;
+                } else {
+                    secondDistance = Math.min(secondDistance, candidate);
+                }
+            }
+            const edgeLength = closestEdge ? Math.hypot(closestEdge.d2.x - closestEdge.d1.x, closestEdge.d2.y - closestEdge.d1.y) * scale : 0;
+            const tolerance = Math.min(pointerType === 'touch' ? 18 : 10, edgeLength * 0.3);
+            if (distance < tolerance && secondDistance - distance > 2) {
                 const event = {edge: closestEdge, stopPropagation: false};
                 this.emit('edgeClicked', event);
                 if (event.stopPropagation) {
@@ -85,14 +98,14 @@ class GridRenderer extends EventEmitter {
         }
     }
 
-    zoom(factor, x = this.width / 2, y = this.height / 2) {
+    zoom(factor, x = this.width / 2, y = this.height / 2, redraw = true) {
         const previous = this.scale;
         this.scale = Math.max(4, Math.min(this.baseScale * 4, previous * factor));
         const ratio = this.scale / previous;
         this.pan.x = x - this.margin - (x - this.pan.x - this.margin) * ratio;
         this.pan.y = y - this.margin - (y - this.pan.y - this.margin) * ratio;
         this.constrain();
-        if (this.theme) this.draw(this.theme);
+        if (redraw && this.theme) this.draw(this.theme);
     }
 
     draw(theme) {
