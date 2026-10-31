@@ -83,7 +83,7 @@
     const debugGrid = false;
     const debugGame = false;
 
-    let theme, grid, game, renderer;
+    let theme, grid, game, renderer, progressRenderer;
     let startGameTime;
     let playing = false;
 
@@ -129,7 +129,7 @@
 
     themeInput.addEventListener("change", () => {
         theme = Themes[themeInput.value];
-        renderer.draw(theme);
+        (progressRenderer || renderer).draw(theme);
     })
 
     restartButton.addEventListener("click", () => {
@@ -151,7 +151,7 @@
         setUndoRedoDisabledState();
     });
 
-    new BoardControls(canvas, () => renderer);
+    new BoardControls(canvas, () => progressRenderer || renderer);
     let timerId;
     newGame();
 
@@ -170,9 +170,10 @@
 
 
         renderer = new GridRenderer(grid, canvas, app.getEdgeSize(gridTypeInput.value));
+        progressRenderer = new GameGenerationProgressRenderer(canvas);
         renderer.debug = debugGame;
         window.renderer = renderer;
-        renderer.draw(theme);
+        progressRenderer.draw(theme);
 
         renderer.on("dotClicked", dot => {
             game.onDotClick(dot);
@@ -193,10 +194,14 @@
         });
 
         game.on("generate-progress", (progress) => {
+            progressRenderer.progress = progress;
+            progressRenderer.draw(theme);
             document.getElementById('generationStatus').textContent = `Generating puzzle… ${Math.round(progress * 100)}%`;
         });
 
         game.on("generate-end", () => {
+            progressRenderer = null;
+            renderer.resize();
             newGameButton.disabled = false;
             gameInputElementState(false);
             document.getElementById('generationStatus').hidden = true;

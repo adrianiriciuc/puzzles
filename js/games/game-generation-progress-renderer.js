@@ -1,42 +1,45 @@
 class GameGenerationProgressRenderer {
-    margin = 10;
+    progress = 0;
 
-    barHeight = 20;
-
-    constructor(grid, canvas, scale) {
-        this.grid = grid;
+    constructor(canvas) {
         this.canvas = canvas;
-        this.scale = scale;
-
-        this.width = this.grid.getWidth() * scale;
-        this.height = this.grid.getHeight() * scale;
-
-        this.canvas.width = this.width + 2 * this.margin + 1;
-        this.canvas.height = this.height + 2 * this.margin + 1;
-
-        const ctx = this.canvas.getContext("2d");
-        ctx.translate(0.5, 0.5);
+        this.resize();
     }
 
-    draw(theme, progress) {
+    resize() {
+        const {width, height} = this.canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        this.canvas.width = Math.round(width * ratio);
+        this.canvas.height = Math.round(height * ratio);
+        if (this.theme) this.draw(this.theme);
+    }
+
+    draw(theme) {
+        this.theme = theme;
         const ctx = this.canvas.getContext("2d");
+        const {width, height} = this.canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 
         ctx.fillStyle = theme.background;
-        ctx.fillRect(-1, -1, this.canvas.width + 2, this.canvas.height + 2);
+        ctx.fillRect(0, 0, width, height);
 
-        const barHeight = this.barHeight;
-        const barWidth = this.width;
+        const barWidth = Math.max(0, Math.min(280, width - 48));
+        const barHeight = 6;
+        const x = (width - barWidth) / 2;
+        const y = height / 2 + 12;
+        const progress = Math.max(0, Math.min(1, this.progress));
 
-        const x = (this.width - barWidth) / 2 + this.margin;
-        const y = (this.height - barHeight) / 2 + this.margin;
-
-        const progressWidth = barWidth * progress;
-        ctx.fillStyle = theme.edge.selected.color;
-        ctx.fillRect(x, y, progressWidth, barHeight);
-
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.font = '14px system-ui, sans-serif';
+        ctx.fillStyle = theme.face.value;
+        ctx.fillText(`Generating puzzle… ${Math.round(progress * 100)}%`, width / 2, y - 20);
         ctx.strokeStyle = theme.edge.default.color;
-        ctx.lineWidth = 2;
-        ctx.rect(x, y, barWidth, barHeight);
-        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, barWidth, barHeight);
+        ctx.fillStyle = theme.edge.selected.color;
+        ctx.fillRect(x, y, barWidth * progress, barHeight);
+        ctx.restore();
     }
 }
